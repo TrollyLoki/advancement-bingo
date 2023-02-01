@@ -26,16 +26,19 @@ public class BingoBoard implements Cloneable {
     private @NotNull Component title;
     private final @NotNull NamespacedKey @NotNull [] @NotNull [] advancements;
     private final boolean @NotNull [] @NotNull [] completed;
+    private final int requiredRows;
     private @Nullable Inventory gui;
 
     /**
      * Creates a new bingo board.
      *
+     * @param title title
      * @param advancements 2-D array of advancement keys
      * @param completed 2-D array of booleans indicating which advancements have been completed
+     * @param requiredRows number of completed rows required before the board is considered winning
      * @throws IllegalArgumentException if either of the 2-D arrays are not square
      */
-    public BingoBoard(@NotNull Component title, @NotNull NamespacedKey @NotNull [] @NotNull [] advancements, boolean @NotNull [] @NotNull [] completed) {
+    public BingoBoard(@NotNull Component title, @NotNull NamespacedKey @NotNull [] @NotNull [] advancements, boolean @NotNull [] @NotNull [] completed, int requiredRows) {
         validateArray(advancements, "Advancements");
         validateArray(completed, "Completed");
         if (advancements.length != completed.length)
@@ -43,16 +46,30 @@ public class BingoBoard implements Cloneable {
         this.title = title;
         this.advancements = advancements;
         this.completed = completed;
+        this.requiredRows = requiredRows;
     }
 
     /**
      * Creates a new uncompleted bingo board.
      *
+     * @param title title
+     * @param advancements 2-D array of advancement keys
+     * @param requiredRows number of completed rows required before the board is considered winning
+     * @throws IllegalArgumentException if the advancements array is not square
+     */
+    public BingoBoard(@NotNull Component title, @NotNull NamespacedKey @NotNull [] @NotNull [] advancements, int requiredRows) {
+        this(title, advancements, new boolean[advancements.length][advancements[0].length], requiredRows);
+    }
+
+    /**
+     * Creates a new uncompleted bingo board.
+     *
+     * @param title title
      * @param advancements 2-D array of advancement keys
      * @throws IllegalArgumentException if the advancements array is not square
      */
     public BingoBoard(@NotNull Component title, @NotNull NamespacedKey @NotNull [] @NotNull [] advancements) {
-        this(title, advancements, new boolean[advancements.length][advancements[0].length]);
+        this(title, advancements, 1);
     }
 
     /**
@@ -62,7 +79,7 @@ public class BingoBoard implements Cloneable {
      * @param options set of advancement keys that can be used
      * @return random uncompleted bingo board
      */
-    public static @NotNull BingoBoard generateRandom(@NotNull Component title, int size, @NotNull Set<@NotNull NamespacedKey> options) {
+    public static @NotNull BingoBoard generateRandom(@NotNull Component title, int size, @NotNull Set<@NotNull NamespacedKey> options, int requiredRows) {
         List<NamespacedKey> optionsList = new ArrayList<>(options);
         Random random = ThreadLocalRandom.current();
 
@@ -74,7 +91,7 @@ public class BingoBoard implements Cloneable {
             }
         }
 
-        return new BingoBoard(title, advancements);
+        return new BingoBoard(title, advancements, requiredRows);
     }
 
     /**
@@ -261,11 +278,20 @@ public class BingoBoard implements Cloneable {
      * @return {@code true} if the board is winning, {@code false} otherwise
      */
     public boolean isWinning() {
+        int completedRows = 0;
+
         for (int i = 0; i < completed.length; i++) {
-            if (isRowComplete(i) || isColumnComplete(i))
-                return true;
+            if (isRowComplete(i))
+                completedRows++;
+            if (isColumnComplete(i))
+                completedRows++;
         }
-        return isTopLeftDiagonalComplete() || isTopRightDiagonalComplete();
+        if (isTopLeftDiagonalComplete())
+            completedRows++;
+        if (isTopRightDiagonalComplete())
+            completedRows++;
+
+        return completedRows >= requiredRows;
     }
 
     @SuppressWarnings({"MethodDoesntCallSuperMethod", "CloneDoesntDeclareCloneNotSupportedException"})
@@ -277,7 +303,7 @@ public class BingoBoard implements Cloneable {
         for (int i = 0; i < completed.length; i++)
             completedCopy[i] = completed[i].clone();
 
-        return new BingoBoard(title, advancementsCopy, completedCopy);
+        return new BingoBoard(title, advancementsCopy, completedCopy, requiredRows);
     }
 
 }

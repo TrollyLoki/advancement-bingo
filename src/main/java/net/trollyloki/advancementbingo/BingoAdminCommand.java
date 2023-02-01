@@ -34,30 +34,42 @@ public class BingoAdminCommand implements CommandExecutor, TabCompleter {
 
             } else if (args[0].equalsIgnoreCase("generate")) {
 
-                if (args.length == 1) {
-                    sender.sendMessage(Component.text("Usage: /" + label + " generate <same|different>", NamedTextColor.RED));
+                boolean sharedBoard;
+                if (args.length > 1 && args[1].equalsIgnoreCase("same"))
+                    sharedBoard = true;
+                else if (args.length > 1 && args[1].equalsIgnoreCase("different"))
+                    sharedBoard = false;
+                else {
+                    sender.sendMessage(Component.text("Usage: /" + label + " generate <same|different> [required-rows]", NamedTextColor.RED));
                     return false;
                 }
 
-                boolean sharedBoard;
-                if (args[1].equalsIgnoreCase("same"))
-                    sharedBoard = true;
-                else if (args[1].equalsIgnoreCase("different"))
-                    sharedBoard = false;
-                else {
-                    sender.sendMessage(Component.text("Usage: /" + label + " generate <same|different>", NamedTextColor.RED));
-                    return false;
+                int rows = 1;
+                if (args.length > 2) {
+
+                    try {
+                        rows = Integer.parseInt(args[2]);
+                    } catch (NumberFormatException e) {
+                        sender.sendMessage(Component.text(args[2] + " is not a valid integer", NamedTextColor.RED));
+                        return false;
+                    }
+
+                    if (rows < 1) {
+                        sender.sendMessage(Component.text("Number of rows must be positive", NamedTextColor.RED));
+                        return false;
+                    }
+
                 }
 
                 BingoBoard board = null;
                 if (sharedBoard)
-                    board = BingoBoard.generateRandom(Component.text("Bingo Board"), plugin.getBoardSize(), plugin.getAdvancementOptions());
+                    board = BingoBoard.generateRandom(Component.text("Bingo Board"), plugin.getBoardSize(), plugin.getAdvancementOptions(), rows);
 
                 for (BingoTeam team : plugin.getManager().getAvailableTeams()) {
                     Component title = team.getDisplayName().append(Component.text(" Bingo Board", NamedTextColor.BLACK));
                     BingoBoard teamBoard = board != null ? board.clone() : null;
                     if (teamBoard == null) {
-                        teamBoard = BingoBoard.generateRandom(title, plugin.getBoardSize(), plugin.getAdvancementOptions());
+                        teamBoard = BingoBoard.generateRandom(title, plugin.getBoardSize(), plugin.getAdvancementOptions(), rows);
                     } else {
                         teamBoard.setTitle(title);
                     }
