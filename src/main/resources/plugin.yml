@@ -1,0 +1,9 @@
+name: AdvancementBingo
+version: ${project.version}
+main: net.trollyloki.advancementbingo.AdvancementBingoPlugin
+api-version: 1.19
+
+commands:
+  bingo:
+  bingoadmin:
+    permission: bingo.admin
