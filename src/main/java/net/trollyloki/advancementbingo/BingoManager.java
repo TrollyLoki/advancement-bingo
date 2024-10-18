@@ -5,6 +5,7 @@ import net.kyori.adventure.text.format.NamedTextColor;
 import net.kyori.adventure.title.Title;
 import org.bukkit.Bukkit;
 import org.bukkit.GameMode;
+import org.bukkit.NamespacedKey;
 import org.bukkit.World;
 import org.bukkit.attribute.Attribute;
 import org.bukkit.entity.Player;
@@ -99,9 +100,13 @@ public class BingoManager implements Listener {
     @EventHandler
     public void onPlayerAdvancementDone(@NotNull PlayerAdvancementDoneEvent event) {
         getTeam(event.getPlayer().getUniqueId()).ifPresent(team -> team.getBoard().ifPresent(board -> {
-
-            if (board.complete(event.getAdvancement().getKey()) && board.isWinning())
-                onWin(team);
+            if (board.complete(event.getAdvancement().getKey())) {
+                if (board.isWinning()) {
+                    onWin(team);
+                } else {
+                    sendBingoProgressMessage(team, event.getAdvancement().getKey());
+                }
+            }
 
         }));
     }
@@ -113,6 +118,35 @@ public class BingoManager implements Listener {
         );
         for (Player player : Bukkit.getOnlinePlayers())
             player.showTitle(title);
+    }
+
+    private void sendBingoProgressMessage(BingoTeam team, NamespacedKey advancement) {
+        if (team.getBoard().isEmpty()) return;
+        @NotNull BingoBoard board = team.getBoard().get();
+
+        int[] advancementLocation = board.findAdvancement(advancement);
+        if (advancementLocation == null) return;
+        int row = advancementLocation[0];
+        int col = advancementLocation[1];
+
+        // Hit for {Team name}
+        // Progress on rows/columns/diagonals
+        // Total bingos scored
+
+        HashMap<Integer, String> lineProgress = new HashMap<>();
+
+        lineProgress.put(board.getRowProgress(row), "R" + (row+1));
+        lineProgress.put(board.getColumnProgress(col), "C" + (col+1));
+        if (row == col) lineProgress.put(board.getTopLeftDiagonalProgress(), "D1");
+        if (row == board.getLength() - 1 - col) lineProgress.put(board.getTopRightDiagonalProgress(), "D2");
+
+        for (UUID uuid : players.keySet()) {
+            Player player = Bukkit.getPlayer(uuid);
+            if (player == null) continue;
+            player.sendMessage(Component.text("Hit for ").append(team.getDisplayName())
+                    .color(team.getTextColor()));
+        }
+
     }
 
 }
