@@ -206,6 +206,10 @@ public class BingoBoard implements Cloneable {
         return advancements.length;
     }
 
+    public int getRequiredRows() {
+        return requiredRows;
+    }
+
     /**
      * Searches this bingo board for an advancement.
      *

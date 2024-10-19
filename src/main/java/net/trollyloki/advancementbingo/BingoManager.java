@@ -135,16 +135,42 @@ public class BingoManager implements Listener {
 
         HashMap<Integer, String> lineProgress = new HashMap<>();
 
-        lineProgress.put(board.getRowProgress(row), "R" + (row+1));
-        lineProgress.put(board.getColumnProgress(col), "C" + (col+1));
-        if (row == col) lineProgress.put(board.getTopLeftDiagonalProgress(), "D1");
-        if (row == board.getLength() - 1 - col) lineProgress.put(board.getTopRightDiagonalProgress(), "D2");
+        addOrAppend(lineProgress, board.getRowProgress(row), "Row " + (row+1));
+        addOrAppend(lineProgress, board.getColumnProgress(col), "Column " + (col+1));
+        if (row == col) addOrAppend(lineProgress, board.getTopLeftDiagonalProgress(), "Left Diagonal");
+        if (row == board.getLength() - 1 - col) addOrAppend(lineProgress, board.getTopRightDiagonalProgress(), "Right Diagonal");
+
+        StringBuilder lineMessage = new StringBuilder();
+        for (Integer key : lineProgress.keySet()) {
+            lineMessage.append(key)
+                    .append("/")
+                    .append(board.getLength())
+                    .append(" for ")
+                    .append(lineProgress.get(key))
+                    .append("; ");
+        }
+
+        lineMessage.delete(lineMessage.length() - 2, lineMessage.length());
+
+        int completedRows = board.getCompletedRows();
+        String completedMessage = "Completed " + completedRows + "/" + board.getRequiredRows() + " bingos to win";
 
         for (UUID uuid : players.keySet()) {
             Player player = Bukkit.getPlayer(uuid);
             if (player == null) continue;
             player.sendMessage(Component.text("Hit for ").append(team.getDisplayName())
                     .color(team.getTextColor()));
+            player.sendMessage(Component.text(lineMessage.toString()).color(NamedTextColor.DARK_GRAY));
+            if (completedRows > 0 && board.getRequiredRows() > 1) player.sendMessage(Component.text(completedMessage).color(NamedTextColor.DARK_GRAY));
+        }
+
+    }
+
+    private void addOrAppend(Map<Integer, String> map, int key, String value) {
+        if (map.containsKey(key)) {
+            map.put(key, map.get(key) + ", " + value);
+        } else {
+            map.put(key, value);
         }
 
     }
