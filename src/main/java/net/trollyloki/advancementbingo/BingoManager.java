@@ -107,7 +107,7 @@ public class BingoManager implements Listener {
                 if (board.isWinning()) {
                     onWin(team);
                 } else {
-                    sendBingoProgressMessage(team, event.getAdvancement().getKey());
+                    onBingoHit(team, event.getAdvancement().getKey());
                 }
             }
 
@@ -119,11 +119,13 @@ public class BingoManager implements Listener {
                 Component.empty(),
                 Title.Times.times(Duration.ofMillis(500), Duration.ofSeconds(3), Duration.ofSeconds(1))
         );
-        for (Player player : Bukkit.getOnlinePlayers())
+        for (Player player : Bukkit.getOnlinePlayers()) {
             player.showTitle(title);
+            Jingles.playGameEnd(plugin, player);
+        }
     }
 
-    private void sendBingoProgressMessage(BingoTeam team, NamespacedKey advancement) {
+    private void onBingoHit(BingoTeam team, NamespacedKey advancement) {
         if (team.getBoard().isEmpty()) return;
         @NotNull BingoBoard board = team.getBoard().get();
 
@@ -148,6 +150,7 @@ public class BingoManager implements Listener {
                 player.sendMessage(hitMessage);
                 player.sendMessage(lineMessage);
                 if (board.getCompletedRows() > 0 && board.getRequiredRows() > 1) player.sendMessage(completedMessage);
+                Jingles.playAdvancementHit(plugin, player);
             }
         });
 
