@@ -1,7 +1,10 @@
 package net.trollyloki.advancementbingo;
 
 import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.JoinConfiguration;
+import net.kyori.adventure.text.TextComponent;
 import net.kyori.adventure.text.format.NamedTextColor;
+import net.kyori.adventure.text.format.TextDecoration;
 import net.kyori.adventure.title.Title;
 import org.bukkit.Bukkit;
 import org.bukkit.GameMode;
@@ -133,36 +136,20 @@ public class BingoManager implements Listener {
         // Progress on rows/columns/diagonals
         // Total bingos scored
 
-        HashMap<Integer, String> lineProgress = new HashMap<>();
+        Component hitMessage = hitMessage(team);
+        Component lineMessage = progressMessage(board, row, col);
+        Component completedMessage = Component.text("Completed " + board.getCompletedRows() + "/" + board.getRequiredRows() + " bingos to win")
+                .color(team.getTextColor());
 
-        addOrAppend(lineProgress, board.getRowProgress(row), "Row " + (row+1));
-        addOrAppend(lineProgress, board.getColumnProgress(col), "Column " + (col+1));
-        if (row == col) addOrAppend(lineProgress, board.getTopLeftDiagonalProgress(), "Left Diagonal");
-        if (row == board.getLength() - 1 - col) addOrAppend(lineProgress, board.getTopRightDiagonalProgress(), "Right Diagonal");
-
-        StringBuilder lineMessage = new StringBuilder();
-        for (Integer key : lineProgress.keySet()) {
-            lineMessage.append(key)
-                    .append("/")
-                    .append(board.getLength())
-                    .append(" for ")
-                    .append(lineProgress.get(key))
-                    .append("; ");
-        }
-
-        lineMessage.delete(lineMessage.length() - 2, lineMessage.length());
-
-        int completedRows = board.getCompletedRows();
-        String completedMessage = "Completed " + completedRows + "/" + board.getRequiredRows() + " bingos to win";
-
-        for (UUID uuid : players.keySet()) {
-            Player player = Bukkit.getPlayer(uuid);
-            if (player == null) continue;
-            player.sendMessage(Component.text("Hit for ").append(team.getDisplayName())
-                    .color(team.getTextColor()));
-            player.sendMessage(Component.text(lineMessage.toString()).color(NamedTextColor.DARK_GRAY));
-            if (completedRows > 0 && board.getRequiredRows() > 1) player.sendMessage(Component.text(completedMessage).color(NamedTextColor.DARK_GRAY));
-        }
+        Bukkit.getScheduler().runTask(plugin, () -> {
+            for (UUID uuid : players.keySet()) {
+                Player player = Bukkit.getPlayer(uuid);
+                if (player == null) continue;
+                player.sendMessage(hitMessage);
+                player.sendMessage(lineMessage);
+                if (board.getCompletedRows() > 0 && board.getRequiredRows() > 1) player.sendMessage(completedMessage);
+            }
+        });
 
     }
 
@@ -173,6 +160,43 @@ public class BingoManager implements Listener {
             map.put(key, value);
         }
 
+    }
+
+    private Component hitMessage(BingoTeam team) {
+        return Component.text().content("Hit for ")
+                .append(Component.text("&")
+                        .color(team.getTextColor())
+                        .decoration(TextDecoration.OBFUSCATED, true))
+                .append(team.getDisplayName().color(team.getTextColor()))
+                .append(Component.text("&")
+                        .color(team.getTextColor())
+                        .decoration(TextDecoration.OBFUSCATED, true))
+                .decoration(TextDecoration.BOLD, true)
+                .build();
+    }
+
+    private Component progressMessage(BingoBoard board, int row, int col) {
+        HashMap<Integer, String> lineProgress = new HashMap<>();
+
+        addOrAppend(lineProgress, board.getRowProgress(row), "Row " + (row+1));
+        addOrAppend(lineProgress, board.getColumnProgress(col), "Column " + (col+1));
+        if (row == col) addOrAppend(lineProgress, board.getTopLeftDiagonalProgress(), "Left Diagonal");
+        if (row == board.getLength() - 1 - col) addOrAppend(lineProgress, board.getTopRightDiagonalProgress(), "Right Diagonal");
+
+        List<TextComponent> components = new ArrayList<>();
+        lineProgress.keySet().stream()
+                .sorted(Comparator.reverseOrder())
+                .map((key) -> {
+                    TextComponent.Builder builder = Component.text().content(key + "/" + board.getLength());
+                    if (key == board.getLength()) builder.color(NamedTextColor.GREEN);
+                    else builder.color(NamedTextColor.GRAY);
+                    builder.append(Component.text(" for " + lineProgress.get(key)).color(NamedTextColor.GRAY));
+                    return builder.build();
+                })
+                .forEachOrdered(components::add);
+
+        JoinConfiguration joinConfig = JoinConfiguration.separator(Component.text(" | ").color(NamedTextColor.GRAY));
+        return Component.join(joinConfig, components);
     }
 
 }
