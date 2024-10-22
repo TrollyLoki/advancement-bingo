@@ -143,6 +143,7 @@ public class BingoManager implements Listener {
         Component completedMessage = Component.text("Completed " + board.getCompletedRows() + "/" + board.getRequiredRows() + " bingos to win")
                 .color(team.getTextColor());
 
+        // Send message next tick so it's displayed after vanilla advancement message
         Bukkit.getScheduler().runTask(plugin, () -> {
             for (UUID uuid : players.keySet()) {
                 Player player = Bukkit.getPlayer(uuid);
