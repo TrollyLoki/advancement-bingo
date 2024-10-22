@@ -156,15 +156,6 @@ public class BingoManager implements Listener {
 
     }
 
-    private void addOrAppend(Map<Integer, String> map, int key, String value) {
-        if (map.containsKey(key)) {
-            map.put(key, map.get(key) + ", " + value);
-        } else {
-            map.put(key, value);
-        }
-
-    }
-
     private Component hitMessage(BingoTeam team) {
         return Component.text().content("Hit for ")
                 .append(Component.text("&")
@@ -181,10 +172,12 @@ public class BingoManager implements Listener {
     private Component progressMessage(BingoBoard board, int row, int col) {
         HashMap<Integer, String> lineProgress = new HashMap<>();
 
-        addOrAppend(lineProgress, board.getRowProgress(row), "Row " + (row+1));
-        addOrAppend(lineProgress, board.getColumnProgress(col), "Column " + (col+1));
-        if (row == col) addOrAppend(lineProgress, board.getTopLeftDiagonalProgress(), "Left Diagonal");
-        if (row == board.getLength() - 1 - col) addOrAppend(lineProgress, board.getTopRightDiagonalProgress(), "Right Diagonal");
+        lineProgress.merge(board.getRowProgress(row), "Row " + (row+1), (existing, append) -> existing + ", " + append);
+        lineProgress.merge(board.getColumnProgress(col), "Column " + (col+1), (existing, append) -> existing + ", " + append);
+        if (row == col)
+            lineProgress.merge(board.getTopLeftDiagonalProgress(), "Left Diagonal", (existing, append) -> existing + ", " + append);
+        if (row == board.getLength() - 1 - col)
+            lineProgress.merge(board.getTopRightDiagonalProgress(), "Right Diagonal", (existing, append) -> existing + ", " + append);
 
         List<TextComponent> components =
         lineProgress.entrySet().stream()
