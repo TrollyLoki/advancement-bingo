@@ -285,35 +285,19 @@ public class BingoBoard implements Cloneable {
     }
 
     private boolean isRowComplete(int row) {
-        for (int c = 0; c < completed.length; c++) {
-            if (!completed[row][c])
-                return false;
-        }
-        return true;
+        return getRowProgress(row) >= getLength();
     }
 
     private boolean isColumnComplete(int column) {
-        for (int r = 0; r < completed.length; r++) {
-            if (!completed[r][column])
-                return false;
-        }
-        return true;
+        return getColumnProgress(column) >= getLength();
     }
 
     private boolean isTopLeftDiagonalComplete() {
-        for (int i = 0; i < completed.length; i++) {
-            if (!completed[i][i])
-                return false;
-        }
-        return true;
+        return getTopLeftDiagonalProgress() >= getLength();
     }
 
     private boolean isTopRightDiagonalComplete() {
-        for (int i = 0; i < completed.length; i++) {
-            if (!completed[i][completed.length - 1 - i])
-                return false;
-        }
-        return true;
+        return getTopRightDiagonalProgress() >= getLength();
     }
 
     /**
