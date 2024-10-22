@@ -186,17 +186,17 @@ public class BingoManager implements Listener {
         if (row == col) addOrAppend(lineProgress, board.getTopLeftDiagonalProgress(), "Left Diagonal");
         if (row == board.getLength() - 1 - col) addOrAppend(lineProgress, board.getTopRightDiagonalProgress(), "Right Diagonal");
 
-        List<TextComponent> components = new ArrayList<>();
-        lineProgress.keySet().stream()
-                .sorted(Comparator.reverseOrder())
-                .map((key) -> {
-                    TextComponent.Builder builder = Component.text().content(key + "/" + board.getLength());
-                    if (key == board.getLength()) builder.color(NamedTextColor.GREEN);
+        List<TextComponent> components =
+        lineProgress.entrySet().stream()
+                .sorted(Map.Entry.comparingByKey(Comparator.reverseOrder()))
+                .map((entry) -> {
+                    TextComponent.Builder builder = Component.text().content(entry.getKey() + "/" + board.getLength());
+                    if (entry.getKey() == board.getLength()) builder.color(NamedTextColor.GREEN);
                     else builder.color(NamedTextColor.GRAY);
-                    builder.append(Component.text(" for " + lineProgress.get(key)).color(NamedTextColor.GRAY));
+                    builder.append(Component.text(" for " + entry.getValue()).color(NamedTextColor.GRAY));
                     return builder.build();
                 })
-                .forEachOrdered(components::add);
+                .toList();
 
         JoinConfiguration joinConfig = JoinConfiguration.separator(Component.text(" | ").color(NamedTextColor.GRAY));
         return Component.join(joinConfig, components);
