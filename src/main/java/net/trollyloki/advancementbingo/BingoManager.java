@@ -115,14 +115,19 @@ public class BingoManager implements Listener {
     }
 
     public void onWin(@NotNull BingoTeam team) {
-        Title title = Title.title(team.getDisplayName().append(Component.text(" wins!", NamedTextColor.WHITE)),
-                Component.empty(),
-                Title.Times.times(Duration.ofMillis(500), Duration.ofSeconds(3), Duration.ofSeconds(1))
+        Component winMessage = team.getDisplayName().append(Component.text(" wins!", NamedTextColor.WHITE));
+        Title title = Title.title(winMessage, Component.empty(),
+                Title.Times.times(Duration.ofMillis(500), Duration.ofSeconds(5), Duration.ofSeconds(1))
         );
-        for (Player player : Bukkit.getOnlinePlayers()) {
-            player.showTitle(title);
-            Jingles.playGameEnd(plugin, player);
-        }
+
+        // Send message next tick so it's displayed after vanilla advancement message
+        Bukkit.getScheduler().runTask(plugin, () -> {
+            for (Player player : Bukkit.getOnlinePlayers()) {
+                player.showTitle(title);
+                player.sendMessage(winMessage);
+                Jingles.playGameEnd(plugin, player);
+            }
+        });
     }
 
     private void onBingoHit(BingoTeam team, NamespacedKey advancement) {
