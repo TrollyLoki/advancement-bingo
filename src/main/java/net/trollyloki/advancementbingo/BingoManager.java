@@ -1,10 +1,14 @@
 package net.trollyloki.advancementbingo;
 
 import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.JoinConfiguration;
+import net.kyori.adventure.text.TextComponent;
 import net.kyori.adventure.text.format.NamedTextColor;
+import net.kyori.adventure.text.format.TextDecoration;
 import net.kyori.adventure.title.Title;
 import org.bukkit.Bukkit;
 import org.bukkit.GameMode;
+import org.bukkit.NamespacedKey;
 import org.bukkit.World;
 import org.bukkit.attribute.Attribute;
 import org.bukkit.entity.Player;
@@ -99,9 +103,13 @@ public class BingoManager implements Listener {
     @EventHandler
     public void onPlayerAdvancementDone(@NotNull PlayerAdvancementDoneEvent event) {
         getTeam(event.getPlayer().getUniqueId()).ifPresent(team -> team.getBoard().ifPresent(board -> {
-
-            if (board.complete(event.getAdvancement().getKey()) && board.isWinning())
-                onWin(team);
+            if (board.complete(event.getAdvancement().getKey())) {
+                if (board.isWinning()) {
+                    onWin(team);
+                } else {
+                    onBingoHit(team, event.getAdvancement().getKey());
+                }
+            }
 
         }));
     }
@@ -111,8 +119,83 @@ public class BingoManager implements Listener {
                 Component.empty(),
                 Title.Times.times(Duration.ofMillis(500), Duration.ofSeconds(3), Duration.ofSeconds(1))
         );
-        for (Player player : Bukkit.getOnlinePlayers())
+        for (Player player : Bukkit.getOnlinePlayers()) {
             player.showTitle(title);
+            Jingles.playGameEnd(plugin, player);
+        }
+    }
+
+    private void onBingoHit(BingoTeam team, NamespacedKey advancement) {
+        if (team.getBoard().isEmpty()) return;
+        @NotNull BingoBoard board = team.getBoard().get();
+
+        int[] advancementLocation = board.findAdvancement(advancement);
+        if (advancementLocation == null) return;
+        int row = advancementLocation[0];
+        int col = advancementLocation[1];
+
+        // Hit for {Team name}
+        // Progress on rows/columns/diagonals
+        // Total bingos scored
+
+        Component hitMessage = hitMessage(team);
+        Component lineMessage = progressMessage(board, row, col);
+        Component completedMessage = Component.text("Completed " + board.getCompletedRows() + "/" + board.getRequiredRows() + " bingos to win")
+                .color(team.getTextColor());
+
+        // Send message next tick so it's displayed after vanilla advancement message
+        Bukkit.getScheduler().runTask(plugin, () -> {
+            for (Player player : Bukkit.getOnlinePlayers()) {
+                player.sendMessage(hitMessage);
+                player.sendMessage(lineMessage);
+                if (board.getCompletedRows() > 0 && board.getRequiredRows() > 1) player.sendMessage(completedMessage);
+                Jingles.playAdvancementHit(plugin, player);
+            }
+        });
+
+    }
+
+    private Component hitMessage(BingoTeam team) {
+        return Component.text().content("Hit for ")
+                .append(Component.text("&")
+                        .color(team.getTextColor())
+                        .decoration(TextDecoration.OBFUSCATED, true))
+                .append(team.getDisplayName().color(team.getTextColor()))
+                .append(Component.text("&")
+                        .color(team.getTextColor())
+                        .decoration(TextDecoration.OBFUSCATED, true))
+                .decoration(TextDecoration.BOLD, true)
+                .build();
+    }
+
+    public void mergeLineProgress(Map<Integer, String> map, int key, String value) {
+        map.merge(key, value, (existing, append) -> existing + ", " + append);
+    }
+
+    private Component progressMessage(BingoBoard board, int row, int col) {
+        HashMap<Integer, String> lineProgress = new HashMap<>();
+
+        mergeLineProgress(lineProgress, board.getRowProgress(row), "Row " + (row+1));
+        mergeLineProgress(lineProgress, board.getColumnProgress(col), "Column " + (col+1));
+        if (row == col)
+            mergeLineProgress(lineProgress, board.getTopLeftDiagonalProgress(), "Left Diagonal");
+        if (row == board.getLength() - 1 - col)
+            mergeLineProgress(lineProgress, board.getTopRightDiagonalProgress(), "Right Diagonal");
+
+        List<TextComponent> components =
+        lineProgress.entrySet().stream()
+                .sorted(Map.Entry.comparingByKey(Comparator.reverseOrder()))
+                .map((entry) -> {
+                    TextComponent.Builder builder = Component.text().content(entry.getKey() + "/" + board.getLength());
+                    if (entry.getKey() == board.getLength()) builder.color(NamedTextColor.GREEN);
+                    else builder.color(NamedTextColor.GRAY);
+                    builder.append(Component.text(" for " + entry.getValue()).color(NamedTextColor.GRAY));
+                    return builder.build();
+                })
+                .toList();
+
+        JoinConfiguration joinConfig = JoinConfiguration.separator(Component.text(" | ").color(NamedTextColor.GRAY));
+        return Component.join(joinConfig, components);
     }
 
 }

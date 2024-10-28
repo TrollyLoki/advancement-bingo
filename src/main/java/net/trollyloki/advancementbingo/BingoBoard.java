@@ -202,6 +202,14 @@ public class BingoBoard implements Cloneable {
         return gui;
     }
 
+    public int getLength() {
+        return advancements.length;
+    }
+
+    public int getRequiredRows() {
+        return requiredRows;
+    }
+
     /**
      * Searches this bingo board for an advancement.
      *
@@ -240,36 +248,56 @@ public class BingoBoard implements Cloneable {
         return true;
     }
 
-    private boolean isRowComplete(int row) {
+    public int getRowProgress(int row) {
+        int count = 0;
         for (int c = 0; c < completed.length; c++) {
-            if (!completed[row][c])
-                return false;
+            if (completed[row][c])
+                count++;
         }
-        return true;
+        return count;
+    }
+
+    public int getColumnProgress(int column) {
+        int count = 0;
+        for (int r = 0; r < completed.length; r++) {
+            if (completed[r][column])
+                count++;
+        }
+        return count;
+    }
+
+    public int getTopLeftDiagonalProgress() {
+        int count = 0;
+        for (int i = 0; i < completed.length; i++) {
+            if (completed[i][i])
+                count++;
+        }
+        return count;
+    }
+
+    public int getTopRightDiagonalProgress() {
+        int count = 0;
+        for (int i = 0; i < completed.length; i++) {
+            if (completed[i][completed.length - 1 - i])
+                count++;
+        }
+        return count;
+    }
+
+    private boolean isRowComplete(int row) {
+        return getRowProgress(row) >= getLength();
     }
 
     private boolean isColumnComplete(int column) {
-        for (int r = 0; r < completed.length; r++) {
-            if (!completed[r][column])
-                return false;
-        }
-        return true;
+        return getColumnProgress(column) >= getLength();
     }
 
     private boolean isTopLeftDiagonalComplete() {
-        for (int i = 0; i < completed.length; i++) {
-            if (!completed[i][i])
-                return false;
-        }
-        return true;
+        return getTopLeftDiagonalProgress() >= getLength();
     }
 
     private boolean isTopRightDiagonalComplete() {
-        for (int i = 0; i < completed.length; i++) {
-            if (!completed[i][completed.length - 1 - i])
-                return false;
-        }
-        return true;
+        return getTopRightDiagonalProgress() >= getLength();
     }
 
     /**
@@ -278,6 +306,10 @@ public class BingoBoard implements Cloneable {
      * @return {@code true} if the board is winning, {@code false} otherwise
      */
     public boolean isWinning() {
+        return getCompletedRows() >= requiredRows;
+    }
+
+    public int getCompletedRows() {
         int completedRows = 0;
 
         for (int i = 0; i < completed.length; i++) {
@@ -291,7 +323,7 @@ public class BingoBoard implements Cloneable {
         if (isTopRightDiagonalComplete())
             completedRows++;
 
-        return completedRows >= requiredRows;
+        return completedRows;
     }
 
     @SuppressWarnings({"MethodDoesntCallSuperMethod", "CloneDoesntDeclareCloneNotSupportedException"})
