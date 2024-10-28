@@ -145,9 +145,7 @@ public class BingoManager implements Listener {
 
         // Send message next tick so it's displayed after vanilla advancement message
         Bukkit.getScheduler().runTask(plugin, () -> {
-            for (UUID uuid : players.keySet()) {
-                Player player = Bukkit.getPlayer(uuid);
-                if (player == null) continue;
+            for (Player player : Bukkit.getOnlinePlayers()) {
                 player.sendMessage(hitMessage);
                 player.sendMessage(lineMessage);
                 if (board.getCompletedRows() > 0 && board.getRequiredRows() > 1) player.sendMessage(completedMessage);
