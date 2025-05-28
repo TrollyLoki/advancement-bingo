@@ -6,7 +6,7 @@
 
     <groupId>net.trollyloki</groupId>
     <artifactId>advancement-bingo</artifactId>
-    <version>0.4.3</version>
+    <version>0.4.4</version>
 
     <properties>
         <maven.compiler.source>17</maven.compiler.source>

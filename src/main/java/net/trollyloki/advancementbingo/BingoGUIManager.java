@@ -53,7 +53,7 @@ public class BingoGUIManager implements Listener {
         teamSelectTeams = new HashMap<>();
         teamSelectSlots = new HashMap<>();
         int slot = 10;
-        for (BingoTeam team : bingoManager.getAvailableTeams()) {
+        for (BingoTeam team : bingoManager.getAvailableTeams().values()) {
             teamSelectTeams.put(slot, team);
             teamSelectSlots.put(team, slot);
             slot += 2;
@@ -78,7 +78,7 @@ public class BingoGUIManager implements Listener {
             teamPlayers.computeIfAbsent(entry.getValue(), k -> new HashSet<>()).add(entry.getKey());
         }
 
-        for (BingoTeam team : bingoManager.getAvailableTeams()) {
+        for (BingoTeam team : bingoManager.getAvailableTeams().values()) {
             ItemStack item = teamSelectGUI.getItem(teamSelectSlots.get(team));
             assert item != null;
             List<Component> lore = teamPlayers.getOrDefault(team, Collections.emptySet()).stream()

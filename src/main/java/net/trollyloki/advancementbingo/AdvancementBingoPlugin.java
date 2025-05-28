@@ -6,7 +6,7 @@ import org.bukkit.World;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -20,7 +20,12 @@ public class AdvancementBingoPlugin extends JavaPlugin {
 
         saveDefaultConfig();
 
-        manager = new BingoManager(this, List.of(BingoTeam.red(), BingoTeam.blue(), BingoTeam.green(), BingoTeam.yellow()));
+        manager = new BingoManager(this, Map.of(
+                "red", BingoTeam.red(),
+                "blue", BingoTeam.blue(),
+                "green", BingoTeam.green(),
+                "yellow", BingoTeam.yellow()
+        ));
         guiManager = new BingoGUIManager(manager);
 
         getServer().getPluginManager().registerEvents(manager, this);

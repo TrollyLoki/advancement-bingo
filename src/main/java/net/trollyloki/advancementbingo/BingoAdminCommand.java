@@ -65,7 +65,7 @@ public class BingoAdminCommand implements CommandExecutor, TabCompleter {
                 if (sharedBoard)
                     board = BingoBoard.generateRandom(Component.text("Bingo Board"), plugin.getBoardSize(), plugin.getAdvancementOptions(), rows);
 
-                for (BingoTeam team : plugin.getManager().getAvailableTeams()) {
+                for (BingoTeam team : plugin.getManager().getAvailableTeams().values()) {
                     Component title = team.getDisplayName().append(Component.text(" Bingo Board", NamedTextColor.BLACK));
                     BingoBoard teamBoard = board != null ? board.clone() : null;
                     if (teamBoard == null) {
@@ -124,10 +124,35 @@ public class BingoAdminCommand implements CommandExecutor, TabCompleter {
                 plugin.getGUIManager().openGUI(player, board.get().getGUI());
                 return true;
 
+            } else if (args[0].equalsIgnoreCase("team")) {
+
+                if (args.length <= 2) {
+                    sender.sendMessage(Component.text("Usage: /" + label + " team <player> <team>", NamedTextColor.RED));
+                    return false;
+                }
+
+                OfflinePlayer bingoPlayer = plugin.getServer().getOfflinePlayerIfCached(args[1]);
+                if (bingoPlayer == null) {
+                    sender.sendMessage(Component.text("Unknown player " + args[1], NamedTextColor.RED));
+                    return false;
+                }
+
+                BingoTeam team = plugin.getManager().getAvailableTeams().get(args[2].toLowerCase());
+                if (team == null) {
+                    sender.sendMessage(Component.text("Unknown team " + args[2], NamedTextColor.RED));
+                    return false;
+                }
+
+                plugin.getManager().setTeam(bingoPlayer.getUniqueId(), team);
+                plugin.getGUIManager().updateTeamPlayers();
+
+                sender.sendMessage(Component.text(bingoPlayer.getName() + " is now on ").append(team.getDisplayName()));
+                return true;
+
             } else if (args[0].equalsIgnoreCase("reset")) {
 
                 plugin.getManager().clear();
-                for (BingoTeam team : plugin.getManager().getAvailableTeams())
+                for (BingoTeam team : plugin.getManager().getAvailableTeams().values())
                     team.setBoard(null);
 
                 sender.sendMessage(Component.text("Bingo teams reset", NamedTextColor.GREEN));
@@ -137,7 +162,7 @@ public class BingoAdminCommand implements CommandExecutor, TabCompleter {
 
         }
 
-        sender.sendMessage(Component.text("Usage: /" + label + " <reload|generate|start|board|reset>", NamedTextColor.RED));
+        sender.sendMessage(Component.text("Usage: /" + label + " <reload|generate|start|board|team|reset>", NamedTextColor.RED));
         return false;
 
     }
@@ -148,7 +173,7 @@ public class BingoAdminCommand implements CommandExecutor, TabCompleter {
 
         if (args.length == 1) {
 
-            return Stream.of("reload", "generate", "start", "board", "reset").filter(option -> option.startsWith(prefix)).toList();
+            return Stream.of("reload", "generate", "start", "board", "team", "reset").filter(option -> option.startsWith(prefix)).toList();
 
         } else if (args[0].equalsIgnoreCase("board")) {
 
@@ -160,6 +185,14 @@ public class BingoAdminCommand implements CommandExecutor, TabCompleter {
 
             if (args.length == 2) {
                 return Stream.of("same", "different").filter(option -> option.startsWith(prefix)).toList();
+            }
+
+        } else if (args[0].equalsIgnoreCase("team")) {
+
+            if (args.length == 2) {
+                return sender.getServer().getOnlinePlayers().stream().map(Player::getName).filter(name -> name.toLowerCase().startsWith(prefix)).toList();
+            } else if (args.length == 3) {
+                return plugin.getManager().getAvailableTeams().keySet().stream().filter(id -> id.startsWith(prefix)).toList();
             }
 
         }

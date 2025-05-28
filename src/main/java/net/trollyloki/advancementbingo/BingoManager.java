@@ -25,17 +25,17 @@ public class BingoManager implements Listener {
 
     private final @NotNull AdvancementBingoPlugin plugin;
 
-    private final @NotNull List<@NotNull BingoTeam> availableTeams;
+    private final @NotNull Map<@NotNull String, @NotNull BingoTeam> availableTeams;
     private final @NotNull Map<@NotNull UUID, @NotNull BingoTeam> players;
 
-    public BingoManager(@NotNull AdvancementBingoPlugin plugin, @NotNull List<@NotNull BingoTeam> availableTeams) {
+    public BingoManager(@NotNull AdvancementBingoPlugin plugin, @NotNull Map<@NotNull String, @NotNull BingoTeam> availableTeams) {
         this.plugin = plugin;
         this.availableTeams = availableTeams;
         this.players = new HashMap<>();
     }
 
-    public @NotNull List<@NotNull BingoTeam> getAvailableTeams() {
-        return Collections.unmodifiableList(availableTeams);
+    public @NotNull Map<@NotNull String, @NotNull BingoTeam> getAvailableTeams() {
+        return Collections.unmodifiableMap(availableTeams);
     }
 
     public @NotNull Map<@NotNull UUID, @NotNull BingoTeam> getPlayers() {
@@ -54,7 +54,7 @@ public class BingoManager implements Listener {
     }
 
     public void clear() {
-        for (BingoTeam team : availableTeams) {
+        for (BingoTeam team : availableTeams.values()) {
             Team scoreboardTeam = team.getScoreboardTeam();
             scoreboardTeam.removeEntries(scoreboardTeam.getEntries());
         }
