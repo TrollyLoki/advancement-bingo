@@ -4,17 +4,23 @@ import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.JoinConfiguration;
 import net.kyori.adventure.text.TextComponent;
 import net.kyori.adventure.text.format.NamedTextColor;
+import net.kyori.adventure.text.format.Style;
 import net.kyori.adventure.text.format.TextDecoration;
 import net.kyori.adventure.title.Title;
 import org.bukkit.Bukkit;
 import org.bukkit.GameMode;
+import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
 import org.bukkit.World;
 import org.bukkit.attribute.Attribute;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
+import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerAdvancementDoneEvent;
+import org.bukkit.event.player.PlayerInteractEvent;
+import org.bukkit.event.player.PlayerJoinEvent;
+import org.bukkit.inventory.ItemStack;
 import org.bukkit.scoreboard.Team;
 import org.jetbrains.annotations.NotNull;
 
@@ -22,6 +28,19 @@ import java.time.Duration;
 import java.util.*;
 
 public class BingoManager implements Listener {
+
+    private static final @NotNull Style NO_ITALICS = Style.style().decoration(TextDecoration.ITALIC, false).build();
+    private static final @NotNull ItemStack BINGO_BOOK = new ItemStack(Material.KNOWLEDGE_BOOK);
+    static {
+        BINGO_BOOK.editMeta(meta -> {
+            meta.displayName(Component.text("Bingo Book", NO_ITALICS));
+            meta.lore(List.of(
+                    Component.text("Interact to open your bingo board", NO_ITALICS.color(NamedTextColor.GRAY)),
+                    Component.text("Alternatively, you can run ", NO_ITALICS.color(NamedTextColor.GRAY)).append(Component.text("/bingo", NamedTextColor.WHITE)),
+                    Component.text("You can always get a new book by running ", NO_ITALICS.color(NamedTextColor.GRAY)).append(Component.text("/bingo book", NamedTextColor.WHITE))
+            ));
+        });
+    }
 
     private final @NotNull AdvancementBingoPlugin plugin;
 
@@ -98,6 +117,27 @@ public class BingoManager implements Listener {
             world.getWorldBorder().setSize(borderSize);
         }
 
+    }
+
+    public void giveBingoBook(@NotNull Player player) {
+        player.getInventory().addItem(BINGO_BOOK);
+    }
+
+    @EventHandler(priority = EventPriority.MONITOR)
+    public void onPlayerJoin(@NotNull PlayerJoinEvent event) {
+        if (event.getPlayer().getInventory().isEmpty()) {
+            giveBingoBook(event.getPlayer());
+        }
+    }
+
+    @EventHandler
+    public void onPlayerRightClick(@NotNull PlayerInteractEvent event) {
+        if (!event.getAction().isRightClick()) return;
+
+        if (event.getMaterial() == BINGO_BOOK.getType()) {
+            event.setCancelled(true);
+            event.getPlayer().performCommand("bingo");
+        }
     }
 
     @EventHandler

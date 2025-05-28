@@ -30,6 +30,11 @@ public class BingoCommand implements CommandExecutor, TabCompleter {
             return false;
         }
 
+        if (args.length > 0 && args[0].equalsIgnoreCase("book")) {
+            manager.getBingoManager().giveBingoBook(player);
+            return true;
+        }
+
         Optional<BingoTeam> team = manager.getBingoManager().getTeam(player.getUniqueId());
         if (team.isPresent() && team.get().getBoard().isPresent()) {
             manager.openGUI(player, team.get().getBoard().get().getGUI());
