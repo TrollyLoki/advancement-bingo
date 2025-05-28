@@ -85,7 +85,7 @@ public class BingoManager implements Listener {
             player.spigot().respawn();
             player.setGameMode(GameMode.SURVIVAL);
             //noinspection DataFlowIssue
-            player.setHealth(player.getAttribute(Attribute.GENERIC_MAX_HEALTH).getValue());
+            player.setHealth(player.getAttribute(Attribute.MAX_HEALTH).getValue());
             player.setSaturation(5);
             player.setFoodLevel(20);
             player.setLevel(0);
