@@ -29,19 +29,6 @@ import java.util.*;
 
 public class BingoManager implements Listener {
 
-    private static final @NotNull Style NO_ITALICS = Style.style().decoration(TextDecoration.ITALIC, false).build();
-    private static final @NotNull ItemStack BINGO_BOOK = new ItemStack(Material.KNOWLEDGE_BOOK);
-    static {
-        BINGO_BOOK.editMeta(meta -> {
-            meta.displayName(Component.text("Bingo Book", NO_ITALICS));
-            meta.lore(List.of(
-                    Component.text("Interact to open your bingo board", NO_ITALICS.color(NamedTextColor.GRAY)),
-                    Component.text("Alternatively, you can run ", NO_ITALICS.color(NamedTextColor.GRAY)).append(Component.text("/bingo", NamedTextColor.WHITE)),
-                    Component.text("You can always get a new book by running ", NO_ITALICS.color(NamedTextColor.GRAY)).append(Component.text("/bingo book", NamedTextColor.WHITE))
-            ));
-        });
-    }
-
     private final @NotNull AdvancementBingoPlugin plugin;
 
     private final @NotNull Map<@NotNull String, @NotNull BingoTeam> availableTeams;
@@ -120,7 +107,7 @@ public class BingoManager implements Listener {
     }
 
     public void giveBingoBook(@NotNull Player player) {
-        player.getInventory().addItem(BINGO_BOOK);
+        plugin.getBingoItem().ifPresent(player.getInventory()::addItem);
     }
 
     @EventHandler(priority = EventPriority.MONITOR)
@@ -134,7 +121,7 @@ public class BingoManager implements Listener {
     public void onPlayerRightClick(@NotNull PlayerInteractEvent event) {
         if (!event.getAction().isRightClick()) return;
 
-        if (event.getMaterial() == BINGO_BOOK.getType()) {
+        if (plugin.isBingoItem(event.getItem())) {
             event.setCancelled(true);
             event.getPlayer().performCommand("bingo");
         }
