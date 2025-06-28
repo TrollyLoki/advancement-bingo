@@ -127,7 +127,7 @@ public class BingoBoard implements Cloneable {
         Inventory inventory = Bukkit.createInventory(null, advancements.length * 9, title);
 
         ItemStack filler = new ItemStack(Material.BLACK_STAINED_GLASS_PANE);
-        filler.editMeta(meta -> meta.displayName(Component.empty()));
+        filler.editMeta(meta -> meta.setHideTooltip(true));
         for (int i = 0; i < inventory.getSize(); i++)
             inventory.setItem(i, filler);
 
