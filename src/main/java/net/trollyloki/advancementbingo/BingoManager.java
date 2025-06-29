@@ -129,7 +129,14 @@ public class BingoManager implements Listener {
 
     @EventHandler
     public void onPlayerAdvancementDone(@NotNull PlayerAdvancementDoneEvent event) {
-        getTeam(event.getPlayer().getUniqueId()).ifPresent(team -> team.getBoard().ifPresent(board -> {
+        Optional<BingoTeam> optionalTeam = getTeam(event.getPlayer().getUniqueId());
+        if (optionalTeam.isEmpty()) {
+            event.message(null);
+            return;
+        }
+
+        BingoTeam team = optionalTeam.get();
+        team.getBoard().ifPresent(board -> {
             if (board.complete(event.getAdvancement().getKey())) {
                 if (board.isWinning()) {
                     onWin(team);
@@ -137,8 +144,7 @@ public class BingoManager implements Listener {
                     onBingoHit(team, event.getAdvancement().getKey());
                 }
             }
-
-        }));
+        });
     }
 
     public void onWin(@NotNull BingoTeam team) {
