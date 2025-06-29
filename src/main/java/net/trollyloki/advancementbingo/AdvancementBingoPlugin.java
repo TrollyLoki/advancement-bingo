@@ -1,6 +1,7 @@
 package net.trollyloki.advancementbingo;
 
 import net.kyori.adventure.text.minimessage.MiniMessage;
+import org.bukkit.Bukkit;
 import org.bukkit.GameRule;
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
@@ -10,9 +11,12 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.UnmodifiableView;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -22,7 +26,8 @@ public class AdvancementBingoPlugin extends JavaPlugin {
     private BingoManager manager;
     private BingoGUIManager guiManager;
 
-    private @NotNull Optional<ItemStack> bingoItem;
+    private @Nullable ItemStack bingoItem;
+    private @Nullable Set<NamespacedKey> advancementOptions;
 
     @Override
     public void onEnable() {
@@ -57,7 +62,23 @@ public class AdvancementBingoPlugin extends JavaPlugin {
     public void reloadConfig() {
         super.reloadConfig();
 
-        bingoItem = Optional.ofNullable(createItem(getConfig().getConfigurationSection("bingo-item")));
+        bingoItem = createItem(getConfig().getConfigurationSection("bingo-item"));
+
+        advancementOptions = getConfig().getStringList("advancement-options").stream()
+                .map(s -> {
+                    NamespacedKey key = NamespacedKey.fromString(s);
+                    if (key == null) getLogger().warning("Invalid key: " + s);
+                    return key;
+                })
+                .filter(Objects::nonNull)
+                .filter(k -> {
+                    if (Bukkit.getAdvancement(k) == null) {
+                        getLogger().warning("Unknown advancement: " + k);
+                        return false;
+                    }
+                    return true;
+                })
+                .collect(Collectors.toSet());
     }
 
     private @Nullable ItemStack createItem(@Nullable ConfigurationSection section) {
@@ -100,15 +121,17 @@ public class AdvancementBingoPlugin extends JavaPlugin {
     }
 
     public @NotNull Optional<ItemStack> getBingoItem() {
-        return bingoItem.map(ItemStack::clone);
+        return Optional.ofNullable(bingoItem).map(ItemStack::clone);
     }
 
     public boolean isBingoItem(@Nullable ItemStack item) {
-        return bingoItem.map(b -> b.isSimilar(item)).orElse(false);
+        if (bingoItem == null) return false;
+        return bingoItem.isSimilar(item);
     }
 
-    public @NotNull Set<NamespacedKey> getAdvancementOptions() {
-        return getConfig().getStringList("advancement-options").stream().map(NamespacedKey::fromString).collect(Collectors.toSet());
+    public @NotNull @UnmodifiableView Set<NamespacedKey> getAdvancementOptions() {
+        if (advancementOptions == null) return Collections.emptySet();
+        return Collections.unmodifiableSet(advancementOptions);
     }
 
 }
